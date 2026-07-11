@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+
+class AppButton extends StatelessWidget {
+  const AppButton({
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.backgroundColor,
+    this.isLoading = false,
+    this.isSecondary = false,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final Color? backgroundColor;
+  final bool isLoading;
+  final bool isSecondary;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = isLoading
+        ? const SizedBox.square(
+            dimension: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+            ],
+          );
+
+    if (isSecondary) {
+      return OutlinedButton(
+        onPressed: isLoading ? null : onPressed,
+        child: child,
+      );
+    }
+
+    return ElevatedButton(
+      style: backgroundColor == null
+          ? null
+          : ElevatedButton.styleFrom(backgroundColor: backgroundColor),
+      onPressed: isLoading ? null : onPressed,
+      child: child,
+    );
+  }
+}

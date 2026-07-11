@@ -1,0 +1,4 @@
+storePassword=ganti_password_keystore
+keyPassword=ganti_password_key
+keyAlias=ship-monitoring
+storeFile=app/upload-keystore.jks
