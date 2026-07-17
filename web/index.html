@@ -31,7 +31,47 @@
 
   <title>shipmonitoring</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6xaPBsik8R_ZfSDiHb-myCTCqyVJ5iyc"></script>
+  <script>
+    // The API key is supplied by Flutter after `.env` has been loaded. Keeping
+    // the loader here lets the web plugin see the Maps SDK before it builds a
+    // platform view, without duplicating a key in this file.
+    window.shipMonitoring = window.shipMonitoring || {};
+    window.shipMonitoring.loadGoogleMaps = function (apiKey) {
+      if (!apiKey) return Promise.resolve(false);
+
+      if (window.google && window.google.maps && window.google.maps.Map) {
+        return Promise.resolve(true);
+      }
+
+      if (window.shipMonitoring.googleMapsPromise) {
+        return window.shipMonitoring.googleMapsPromise;
+      }
+
+      window.shipMonitoring.googleMapsPromise = new Promise(function (resolve, reject) {
+        const script = document.createElement('script');
+        const parameters = new URLSearchParams({
+          key: apiKey,
+          v: 'weekly',
+          libraries: 'marker',
+          loading: 'async',
+        });
+
+        script.id = 'google-maps-javascript-api';
+        script.src = 'https://maps.googleapis.com/maps/api/js?' + parameters;
+        script.async = true;
+        script.defer = true;
+        script.addEventListener('load', function () { resolve(true); }, { once: true });
+        script.addEventListener(
+          'error',
+          function () { reject(new Error('Google Maps JavaScript API gagal dimuat.')); },
+          { once: true }
+        );
+        document.head.appendChild(script);
+      });
+
+      return window.shipMonitoring.googleMapsPromise;
+    };
+  </script>
 </head>
 <body>
   <!--

@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/platform/google_maps_api_loader.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/empty_view.dart';
 
@@ -61,7 +63,26 @@ class ShipMapCard extends StatelessWidget {
       );
     }
 
-    final hasMapsKey = Env.googleMapsApiKey.isNotEmpty;
+    return ValueListenableBuilder<bool>(
+      valueListenable: googleMapsApiReady,
+      builder: (context, webMapsReady, _) {
+        return _buildMapCard(validPoints, webMapsReady: webMapsReady);
+      },
+    );
+  }
+
+  Widget _buildMapCard(
+    List<ShipMapPoint> validPoints, {
+    required bool webMapsReady,
+  }) {
+    final hasMapsKey = kIsWeb
+        ? Env.googleMapsWebApiKey.isNotEmpty && webMapsReady
+        : Env.googleMapsApiKey.isNotEmpty;
+    final configuredMapId = Env.googleMapsMapId;
+    final mapId = configuredMapId.isNotEmpty
+        ? configuredMapId
+        : (kIsWeb && kDebugMode ? 'DEMO_MAP_ID' : null);
+    final useAdvancedMarkers = mapId != null;
     return AppCard(
       padding: EdgeInsets.zero,
       child: ClipRRect(
@@ -77,7 +98,14 @@ class ShipMapCard extends StatelessWidget {
                           target: _centerOf(validPoints),
                           zoom: validPoints.length == 1 ? 12 : 6.4,
                         ),
-                        markers: _markersOf(validPoints),
+                        mapId: mapId,
+                        markerType: useAdvancedMarkers
+                            ? GoogleMapMarkerType.advancedMarker
+                            : GoogleMapMarkerType.marker,
+                        markers: _markersOf(
+                          validPoints,
+                          useAdvancedMarkers: useAdvancedMarkers,
+                        ),
                         mapToolbarEnabled: false,
                         myLocationButtonEnabled: false,
                         zoomControlsEnabled: false,
@@ -114,19 +142,36 @@ class ShipMapCard extends StatelessWidget {
     );
   }
 
-  Set<Marker> _markersOf(List<ShipMapPoint> points) {
+  Set<Marker> _markersOf(
+    List<ShipMapPoint> points, {
+    required bool useAdvancedMarkers,
+  }) {
     return {
       for (final point in points)
-        Marker(
-          markerId: MarkerId(point.id),
-          position: LatLng(point.latitude, point.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            point.isActive
-                ? BitmapDescriptor.hueAzure
-                : BitmapDescriptor.hueOrange,
+        if (useAdvancedMarkers)
+          AdvancedMarker(
+            markerId: MarkerId(point.id),
+            position: LatLng(point.latitude, point.longitude),
+            icon: BitmapDescriptor.pinConfig(
+              backgroundColor: point.isActive
+                  ? const Color(0xFF1976D2)
+                  : AppColors.warning,
+              borderColor: Colors.white,
+              glyph: const CircleGlyph(color: Colors.white),
+            ),
+            infoWindow: InfoWindow(title: point.title, snippet: point.subtitle),
+          )
+        else
+          Marker(
+            markerId: MarkerId(point.id),
+            position: LatLng(point.latitude, point.longitude),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              point.isActive
+                  ? BitmapDescriptor.hueAzure
+                  : BitmapDescriptor.hueOrange,
+            ),
+            infoWindow: InfoWindow(title: point.title, snippet: point.subtitle),
           ),
-          infoWindow: InfoWindow(title: point.title, snippet: point.subtitle),
-        ),
     };
   }
 

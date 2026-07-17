@@ -609,53 +609,72 @@ class _GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: visual.soft,
-            borderRadius: BorderRadius.circular(AppSizes.radius),
-          ),
-          child: Icon(visual.icon, color: visual.accent, size: 24),
-        ),
-        const SizedBox(width: AppSizes.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Selamat datang,',
-                style: TextStyle(fontSize: 11, color: AppColors.muted),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 320;
+        return Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: visual.soft,
+                borderRadius: BorderRadius.circular(AppSizes.radius),
               ),
-              Text(
-                session.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
+              child: Icon(visual.icon, color: visual.accent, size: 24),
+            ),
+            const SizedBox(width: AppSizes.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selamat datang,',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: AppColors.muted),
+                  ),
+                  Text(
+                    session.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    session.role.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (compact)
+              IconButton.filledTonal(
+                tooltip: 'Logout',
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout_rounded, size: 18),
+              )
+            else
+              FilledButton.tonalIcon(
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('Logout'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
-              Text(
-                session.role.label,
-                style: const TextStyle(fontSize: 11, color: AppColors.muted),
-              ),
-            ],
-          ),
-        ),
-        FilledButton.tonalIcon(
-          onPressed: onLogout,
-          icon: const Icon(Icons.logout_rounded, size: 18),
-          label: const Text('Logout'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 40),
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

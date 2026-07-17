@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipmonitoring/core/utils/date_formatter.dart';
 import 'package:shipmonitoring/core/utils/file_validator.dart';
 import 'package:shipmonitoring/core/widgets/status_badge.dart';
+import 'package:shipmonitoring/features/auth/domain/user_session.dart';
+import 'package:shipmonitoring/features/dashboard/presentation/dashboard_widgets.dart';
 
 void main() {
   testWidgets('StatusBadge renders backend status label', (tester) async {
@@ -13,6 +16,46 @@ void main() {
     );
 
     expect(find.text('Menunggu Verifikasi'), findsOneWidget);
+  });
+
+  testWidgets('RoleScaffold header stays within a narrow mobile viewport', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(180, 700);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: RoleScaffold(
+            visual: RoleVisual.nahkoda,
+            session: UserSession(
+              id: 'captain-1',
+              name: 'Nama Nakhoda Sangat Panjang',
+              role: UserRole.nahkoda,
+              token: 'test-token',
+            ),
+            currentIndex: 0,
+            destinations: [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                label: 'Beranda',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.history_outlined),
+                label: 'Riwayat',
+              ),
+            ],
+            children: [SizedBox.shrink()],
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byTooltip('Logout'), findsOneWidget);
   });
 
   group('FileValidator', () {

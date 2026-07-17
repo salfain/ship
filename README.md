@@ -40,11 +40,18 @@ GOOGLE_MAPS_API_KEY=isi_api_key_maps
 GOOGLE_MAPS_ANDROID_DEBUG_KEY=isi_api_key_maps_debug
 GOOGLE_MAPS_ANDROID_RELEASE_KEY=isi_api_key_maps_release
 GOOGLE_MAPS_WEB_KEY=isi_api_key_maps_web
+GOOGLE_MAPS_MAP_ID=isi_map_id_untuk_advanced_marker
 MANAGER_DECISION_ENABLED=true
 ```
 
 Untuk Android Maps native, isi `GOOGLE_MAPS_API_KEY` di `.env` atau Gradle property `MAPS_API_KEY`; Gradle akan memasukkan key ke Android Manifest.
-Untuk Flutter Web, script Google Maps JavaScript ada di `web/index.html`; key Web harus mengizinkan domain tempat aplikasi web dijalankan.
+Untuk Flutter Web, loader di `web/index.html` mengambil `GOOGLE_MAPS_WEB_KEY` dari `.env`. Key Web harus memakai restriction **Websites** dan mengizinkan origin tempat aplikasi dijalankan. Untuk development, tambahkan `http://localhost:8080/*` di **Google Cloud Console > APIs & Services > Credentials > API key > Website restrictions**, lalu jalankan dengan port tetap:
+
+```bash
+flutter run -d chrome --web-port=8080
+```
+
+Pastikan **Maps JavaScript API** aktif pada project Google Cloud yang sama. `GOOGLE_MAPS_MAP_ID` diperlukan oleh Advanced Marker; saat debug Web dan nilai ini kosong, aplikasi memakai `DEMO_MAP_ID` resmi untuk testing. Gunakan Map ID milik project untuk production.
 
 ## Perintah
 

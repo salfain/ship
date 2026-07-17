@@ -15,6 +15,15 @@ class Env {
     return dotenv.env['GOOGLE_MAPS_API_KEY']?.trim() ?? '';
   }
 
+  static String get googleMapsWebApiKey {
+    final webKey = dotenv.env['GOOGLE_MAPS_WEB_KEY']?.trim();
+    return webKey == null || webKey.isEmpty ? googleMapsApiKey : webKey;
+  }
+
+  static String get googleMapsMapId {
+    return dotenv.env['GOOGLE_MAPS_MAP_ID']?.trim() ?? '';
+  }
+
   static bool get managerDecisionEnabled {
     final value = dotenv.env['MANAGER_DECISION_ENABLED']?.trim().toLowerCase();
     return value == 'true' || value == '1' || value == 'yes';
