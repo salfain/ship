@@ -37,6 +37,62 @@ class CreateUserPayload {
   }
 }
 
+class UpdateUserPayload {
+  const UpdateUserPayload({
+    required this.name,
+    required this.username,
+    required this.role,
+    this.password,
+    this.shipId,
+  });
+
+  final String name;
+  final String username;
+  final String role;
+  final String? password;
+  final String? shipId;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'username': username,
+      'role': role,
+      if (password != null && password!.isNotEmpty) 'password': password,
+      if (shipId != null && shipId!.isNotEmpty) 'shipId': shipId,
+    };
+  }
+}
+
+class ManagedUser {
+  const ManagedUser({
+    required this.id,
+    required this.name,
+    required this.username,
+    required this.role,
+    this.shipId,
+    this.ship,
+  });
+
+  final String id;
+  final String name;
+  final String username;
+  final String role;
+  final String? shipId;
+  final ShipInfo? ship;
+
+  factory ManagedUser.fromJson(Map<String, dynamic> json) {
+    final ship = json['ship'];
+    return ManagedUser(
+      id: '${json['id'] ?? ''}',
+      name: '${json['name'] ?? '-'}',
+      username: '${json['username'] ?? ''}',
+      role: '${json['role'] ?? ''}'.toUpperCase(),
+      shipId: json['shipId'] as String?,
+      ship: ship is Map<String, dynamic> ? ShipInfo.fromJson(ship) : null,
+    );
+  }
+}
+
 class ShipLiveLocation {
   const ShipLiveLocation({
     required this.shipId,

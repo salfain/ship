@@ -83,6 +83,17 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState.unauthenticated();
   }
 
+  Future<void> updateCurrentProfile({
+    required String name,
+    required String username,
+  }) async {
+    final session = state.session;
+    if (session == null) return;
+    final updated = session.copyWith(name: name, username: username);
+    await ref.read(authRepositoryProvider).saveSession(updated);
+    state = AuthState.authenticated(updated);
+  }
+
   void clearError() {
     if (state.status == AuthStatus.unauthenticated &&
         state.errorMessage != null) {

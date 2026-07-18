@@ -14,8 +14,10 @@ class AdminState {
     this.isLoading = true,
     this.isRefreshing = false,
     this.isActing = false,
+    this.isLoadingUsers = false,
     this.submissions = const [],
     this.ships = const [],
+    this.users = const [],
     this.locations = const [],
     this.checklist = const [],
     this.selectedSubmission,
@@ -27,8 +29,10 @@ class AdminState {
   final bool isLoading;
   final bool isRefreshing;
   final bool isActing;
+  final bool isLoadingUsers;
   final List<Submission> submissions;
   final List<ShipSummary> ships;
+  final List<ManagedUser> users;
   final List<ShipLiveLocation> locations;
   final List<ChecklistQuestion> checklist;
   final Submission? selectedSubmission;
@@ -56,8 +60,10 @@ class AdminState {
     bool? isLoading,
     bool? isRefreshing,
     bool? isActing,
+    bool? isLoadingUsers,
     List<Submission>? submissions,
     List<ShipSummary>? ships,
+    List<ManagedUser>? users,
     List<ShipLiveLocation>? locations,
     List<ChecklistQuestion>? checklist,
     Submission? selectedSubmission,
@@ -72,8 +78,10 @@ class AdminState {
       isLoading: isLoading ?? this.isLoading,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isActing: isActing ?? this.isActing,
+      isLoadingUsers: isLoadingUsers ?? this.isLoadingUsers,
       submissions: submissions ?? this.submissions,
       ships: ships ?? this.ships,
+      users: users ?? this.users,
       locations: locations ?? this.locations,
       checklist: checklist ?? this.checklist,
       selectedSubmission: clearSelectedSubmission
@@ -172,6 +180,62 @@ class AdminController extends Notifier<AdminState> {
       state = state.copyWith(
         isActing: false,
         actionMessage: 'Gagal membuat akun pengguna.',
+      );
+    }
+    return false;
+  }
+
+  Future<bool> loadUsers() async {
+    if (state.isLoadingUsers) return false;
+    state = state.copyWith(isLoadingUsers: true, clearActionMessage: true);
+    try {
+      final users = await ref.read(adminRepositoryProvider).getUsers();
+      state = state.copyWith(isLoadingUsers: false, users: users);
+      return true;
+    } on ApiException catch (error) {
+      state = state.copyWith(
+        isLoadingUsers: false,
+        actionMessage: error.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoadingUsers: false,
+        actionMessage: 'Gagal memuat daftar pengguna.',
+      );
+    }
+    return false;
+  }
+
+  Future<bool> updateUser({
+    required String id,
+    required UpdateUserPayload payload,
+  }) async {
+    if (state.isActing) return false;
+    state = state.copyWith(isActing: true, clearActionMessage: true);
+    try {
+      final updated = await ref
+          .read(adminRepositoryProvider)
+          .updateUser(id: id, payload: payload);
+      final users = state.users
+          .map((user) => user.id == updated.id ? updated : user)
+          .toList();
+      state = state.copyWith(
+        isActing: false,
+        users: users,
+        actionMessage: 'Akun pengguna berhasil diperbarui.',
+      );
+      await load();
+      state = state.copyWith(
+        users: users,
+        actionMessage: 'Akun pengguna berhasil diperbarui.',
+      );
+      return true;
+    } on ApiException catch (error) {
+      state = state.copyWith(isActing: false, actionMessage: error.message);
+    } catch (_) {
+      state = state.copyWith(
+        isActing: false,
+        actionMessage: 'Gagal memperbarui akun pengguna.',
       );
     }
     return false;

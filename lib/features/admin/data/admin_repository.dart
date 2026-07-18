@@ -25,6 +25,34 @@ class AdminRepository {
     }
   }
 
+  Future<List<ManagedUser>> getUsers() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('users');
+      return _readList(response.data).map(ManagedUser.fromJson).toList();
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<ManagedUser> updateUser({
+    required String id,
+    required UpdateUserPayload payload,
+  }) async {
+    try {
+      final response = await _dio.put<Map<String, dynamic>>(
+        'users/$id',
+        data: payload.toJson(),
+      );
+      final data = response.data?['data'];
+      if (data is! Map<String, dynamic>) {
+        throw const ApiException('Data pengguna tidak valid dari server.');
+      }
+      return ManagedUser.fromJson(data);
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
   Future<void> createShip(CreateShipPayload payload) async {
     try {
       await _dio.post<Map<String, dynamic>>('ships', data: payload.toJson());

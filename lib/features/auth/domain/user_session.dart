@@ -66,6 +66,19 @@ class UserSession {
   final String? shipNumber;
   final String? shipName;
 
+  UserSession copyWith({String? name, String? username}) {
+    return UserSession(
+      id: id,
+      name: name ?? this.name,
+      username: username ?? this.username,
+      role: role,
+      token: token,
+      shipId: shipId,
+      shipNumber: shipNumber,
+      shipName: shipName,
+    );
+  }
+
   factory UserSession.fromLogin({
     required String token,
     required Map<String, dynamic> data,

@@ -129,6 +129,7 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
           userName: userName,
           state: state,
           onCreateUser: () => _showCreateUserSheet(context, state.ships),
+          onManageUsers: () => _showManageUsersSheet(context),
           onCreateShip: () => _showCreateShipSheet(context),
           onLogout: ref.read(authControllerProvider.notifier).logout,
         ),
@@ -174,6 +175,17 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _CreateUserSheet(ships: ships),
+    );
+  }
+
+  Future<void> _showManageUsersSheet(BuildContext context) async {
+    final loaded = await ref.read(adminControllerProvider.notifier).loadUsers();
+    if (!context.mounted || !loaded) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const _UserManagementSheet(),
     );
   }
 
@@ -512,6 +524,7 @@ class _ProfileTab extends StatelessWidget {
     required this.userName,
     required this.state,
     required this.onCreateUser,
+    required this.onManageUsers,
     required this.onCreateShip,
     required this.onLogout,
   });
@@ -519,6 +532,7 @@ class _ProfileTab extends StatelessWidget {
   final String userName;
   final AdminState state;
   final VoidCallback onCreateUser;
+  final VoidCallback onManageUsers;
   final VoidCallback onCreateShip;
   final VoidCallback onLogout;
 
@@ -567,6 +581,14 @@ class _ProfileTab extends StatelessWidget {
               ),
               const SizedBox(height: AppSizes.sm),
               AppButton(
+                label: 'Kelola Pengguna',
+                icon: Icons.manage_accounts_outlined,
+                backgroundColor: AppColors.admin,
+                isLoading: state.isLoadingUsers,
+                onPressed: onManageUsers,
+              ),
+              const SizedBox(height: AppSizes.sm),
+              AppButton(
                 label: 'Tambah Kapal',
                 icon: Icons.add_circle_outline_rounded,
                 backgroundColor: AppColors.admin,
@@ -585,6 +607,445 @@ class _ProfileTab extends StatelessWidget {
       ],
     );
   }
+}
+
+class _UserManagementSheet extends ConsumerWidget {
+  const _UserManagementSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(adminControllerProvider);
+    final currentUserId = ref.watch(authControllerProvider).session?.id;
+
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.84,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kelola Pengguna',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: AppSizes.xs),
+                      Text(
+                        'Edit data akun seluruh pengguna.',
+                        style: TextStyle(color: AppColors.muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: state.isActing
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.md),
+            Expanded(
+              child: state.users.isEmpty
+                  ? const EmptyView(
+                      title: 'Pengguna belum tersedia',
+                      message: 'Belum ada akun yang dapat dikelola.',
+                      icon: Icons.people_outline,
+                    )
+                  : ListView.separated(
+                      itemCount: state.users.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSizes.sm),
+                      itemBuilder: (context, index) {
+                        final user = state.users[index];
+                        final isCurrentUser = user.id == currentUserId;
+                        final ship = user.ship;
+                        return AppCard(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: _roleColor(
+                                  user.role,
+                                ).withValues(alpha: 0.12),
+                                foregroundColor: _roleColor(user.role),
+                                child: Icon(_roleIcon(user.role)),
+                              ),
+                              const SizedBox(width: AppSizes.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            user.name,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isCurrentUser) ...[
+                                          const SizedBox(width: AppSizes.xs),
+                                          const Text(
+                                            '(Anda)',
+                                            style: TextStyle(
+                                              color: AppColors.muted,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '@${user.username} • ${_roleLabel(user.role)}',
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    if (ship != null) ...[
+                                      const SizedBox(height: AppSizes.xs),
+                                      Text(
+                                        '${ship.shipNumber} - ${ship.name}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: AppSizes.sm),
+                              IconButton.filledTonal(
+                                tooltip: 'Edit akun',
+                                onPressed: state.isActing
+                                    ? null
+                                    : () => _showEditUserSheet(
+                                        context,
+                                        user,
+                                        state.ships,
+                                        isCurrentUser,
+                                      ),
+                                icon: const Icon(Icons.edit_outlined),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditUserSheet(
+    BuildContext context,
+    ManagedUser user,
+    List<ShipSummary> ships,
+    bool isCurrentUser,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _EditUserSheet(
+        user: user,
+        ships: ships,
+        isCurrentUser: isCurrentUser,
+      ),
+    );
+  }
+}
+
+class _EditUserSheet extends ConsumerStatefulWidget {
+  const _EditUserSheet({
+    required this.user,
+    required this.ships,
+    required this.isCurrentUser,
+  });
+
+  final ManagedUser user;
+  final List<ShipSummary> ships;
+  final bool isCurrentUser;
+
+  @override
+  ConsumerState<_EditUserSheet> createState() => _EditUserSheetState();
+}
+
+class _EditUserSheetState extends ConsumerState<_EditUserSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _usernameController;
+  final _passwordController = TextEditingController();
+
+  late String _role;
+  String? _shipId;
+
+  List<ShipSummary> get _availableShips => widget.ships
+      .where(
+        (ship) => ship.captain == null || ship.captain?.id == widget.user.id,
+      )
+      .toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.user.name);
+    _usernameController = TextEditingController(text: widget.user.username);
+    _role = widget.user.role;
+    _shipId = widget.user.shipId;
+    if (_role == 'NAHKODA' &&
+        !_availableShips.any((ship) => ship.id == _shipId)) {
+      _shipId = _availableShips.firstOrNull?.id;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(adminControllerProvider);
+    final ships = _availableShips;
+    final needsShip = _role == 'NAHKODA';
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: AppSizes.lg,
+        right: AppSizes.lg,
+        top: AppSizes.lg,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + AppSizes.lg,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Edit Pengguna',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: state.isActing
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.md),
+              AppTextField(
+                controller: _nameController,
+                label: 'Nama lengkap',
+                prefixIcon: Icons.badge_outlined,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  if (value == null || value.trim().length < 2) {
+                    return 'Nama minimal 2 karakter.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSizes.md),
+              AppTextField(
+                controller: _usernameController,
+                label: 'Username',
+                prefixIcon: Icons.alternate_email_rounded,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  final username = value?.trim() ?? '';
+                  if (!RegExp(r'^[a-zA-Z0-9._-]{3,32}$').hasMatch(username)) {
+                    return 'Gunakan 3-32 huruf, angka, titik, _ atau -.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSizes.md),
+              AppTextField(
+                controller: _passwordController,
+                label: 'Password baru (opsional)',
+                hintText: 'Kosongkan jika tidak diubah',
+                prefixIcon: Icons.lock_reset_outlined,
+                obscureText: true,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  final password = value ?? '';
+                  if (password.isNotEmpty && password.length < 8) {
+                    return 'Password minimal 8 karakter.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSizes.md),
+              DropdownButtonFormField<String>(
+                initialValue: _role,
+                decoration: const InputDecoration(
+                  labelText: 'Role',
+                  prefixIcon: Icon(Icons.manage_accounts_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'NAHKODA', child: Text('Nakhoda')),
+                  DropdownMenuItem(value: 'ADMIN', child: Text('Admin')),
+                  DropdownMenuItem(value: 'MANAGER', child: Text('Manager')),
+                ],
+                onChanged: state.isActing || widget.isCurrentUser
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _role = value;
+                          if (value == 'NAHKODA') {
+                            final hasSelectedShip = ships.any(
+                              (ship) => ship.id == _shipId,
+                            );
+                            _shipId = hasSelectedShip
+                                ? _shipId
+                                : ships.firstOrNull?.id;
+                          } else {
+                            _shipId = null;
+                          }
+                        });
+                      },
+              ),
+              if (widget.isCurrentUser) ...[
+                const SizedBox(height: AppSizes.xs),
+                const Text(
+                  'Role akun Admin yang sedang digunakan tidak dapat diubah.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 11),
+                ),
+              ],
+              if (needsShip) ...[
+                const SizedBox(height: AppSizes.md),
+                if (ships.isEmpty)
+                  const AppCard(
+                    child: EmptyView(
+                      title: 'Tidak ada kapal tersedia',
+                      message: 'Semua kapal sudah memiliki akun Nakhoda.',
+                      icon: Icons.directions_boat_outlined,
+                    ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    key: ValueKey(_shipId),
+                    initialValue: _shipId,
+                    decoration: const InputDecoration(
+                      labelText: 'Kapal Nakhoda',
+                      prefixIcon: Icon(Icons.directions_boat_outlined),
+                    ),
+                    items: ships
+                        .map(
+                          (ship) => DropdownMenuItem(
+                            value: ship.id,
+                            child: Text('${ship.shipNumber} - ${ship.name}'),
+                          ),
+                        )
+                        .toList(),
+                    validator: (value) => value == null
+                        ? 'Kapal wajib dipilih untuk Nakhoda.'
+                        : null,
+                    onChanged: state.isActing
+                        ? null
+                        : (value) => setState(() => _shipId = value),
+                  ),
+              ],
+              const SizedBox(height: AppSizes.lg),
+              AppButton(
+                label: 'Simpan Perubahan',
+                icon: Icons.save_outlined,
+                backgroundColor: AppColors.admin,
+                isLoading: state.isActing,
+                onPressed: needsShip && ships.isEmpty ? null : _submit,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+
+    final success = await ref
+        .read(adminControllerProvider.notifier)
+        .updateUser(
+          id: widget.user.id,
+          payload: UpdateUserPayload(
+            name: _nameController.text.trim(),
+            username: _usernameController.text.trim().toLowerCase(),
+            role: _role,
+            password: _passwordController.text.isEmpty
+                ? null
+                : _passwordController.text,
+            shipId: _role == 'NAHKODA' ? _shipId : null,
+          ),
+        );
+    if (success && widget.isCurrentUser) {
+      await ref
+          .read(authControllerProvider.notifier)
+          .updateCurrentProfile(
+            name: _nameController.text.trim(),
+            username: _usernameController.text.trim().toLowerCase(),
+          );
+    }
+    if (mounted && success) Navigator.of(context).pop();
+  }
+}
+
+String _roleLabel(String role) {
+  return switch (role.toUpperCase()) {
+    'NAHKODA' => 'Nakhoda',
+    'ADMIN' => 'Admin',
+    'MANAGER' => 'Manager',
+    _ => role,
+  };
+}
+
+IconData _roleIcon(String role) {
+  return switch (role.toUpperCase()) {
+    'NAHKODA' => Icons.sailing_outlined,
+    'ADMIN' => Icons.admin_panel_settings_outlined,
+    'MANAGER' => Icons.supervisor_account_outlined,
+    _ => Icons.person_outline,
+  };
+}
+
+Color _roleColor(String role) {
+  return switch (role.toUpperCase()) {
+    'NAHKODA' => AppColors.ocean,
+    'ADMIN' => AppColors.admin,
+    'MANAGER' => AppColors.manager,
+    _ => AppColors.muted,
+  };
 }
 
 class _CreateShipSheet extends ConsumerStatefulWidget {

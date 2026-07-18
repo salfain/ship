@@ -23,6 +23,10 @@ class AuthRepository {
     return _storage.readSession();
   }
 
+  Future<void> saveSession(UserSession session) {
+    return _storage.saveSession(session);
+  }
+
   Future<UserSession> login({
     required String username,
     required String password,

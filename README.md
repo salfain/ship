@@ -8,7 +8,7 @@ Migrasi awal aplikasi Ship Monitoring dari Android Kotlin/Jetpack Compose ke Flu
 - Phase 1: project Flutter, theme Material 3, komponen reusable, environment, dan routing dasar selesai.
 - Phase 2: fondasi auth, secure storage session, Dio interceptor, dan role navigation tersedia.
 - Phase 3: modul Nakhoda inti tersedia: data kapal saya, dashboard dinamis, riwayat pengajuan, detail pengajuan, form pengajuan 4 PDF, dan kirim lokasi GPS.
-- Phase 4: modul Admin inti tersedia: dashboard dinamis, daftar pengajuan, detail verifikasi, approve/reject dengan catatan, data kapal, history kapal, lokasi kapal, checklist cek kedatangan tanpa upload dokumen, serta pembuatan akun pengguna dan penambahan kapal dari Profil Admin.
+- Phase 4: modul Admin inti tersedia: dashboard dinamis, daftar pengajuan, detail verifikasi, approve/reject dengan catatan, data kapal, history kapal, lokasi kapal, checklist cek kedatangan tanpa upload dokumen, serta pembuatan dan pengelolaan akun pengguna beserta penambahan kapal dari Profil Admin.
 - Phase 5: modul Manager/Kepala KSOP inti tersedia: dashboard dinamis, antrian keputusan, detail & approve/reject akhir, data kapal, history kapal, lokasi kapal, dan laporan ringkas.
 - Phase 6: Maps, lokasi, dan monitoring tersedia: permission GPS, kirim koordinat Nakhoda, komponen marker kapal reusable, refresh lokasi, dan fallback preview saat API key Maps belum diisi.
 - Phase 7: file, dokumen, dan validasi tersedia: validasi PDF berdasarkan ekstensi, MIME, ukuran, file kosong, preview nama/ukuran file, upload multipart, dan pesan error saat dokumen URL tidak bisa dibuka.
