@@ -1,5 +1,16 @@
 import '../../nahkoda/domain/nahkoda_models.dart';
 
+class CreateShipPayload {
+  const CreateShipPayload({required this.shipNumber, required this.name});
+
+  final String shipNumber;
+  final String name;
+
+  Map<String, dynamic> toJson() {
+    return {'shipNumber': shipNumber, 'name': name};
+  }
+}
+
 class CreateUserPayload {
   const CreateUserPayload({
     required this.name,

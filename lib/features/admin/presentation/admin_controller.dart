@@ -177,6 +177,29 @@ class AdminController extends Notifier<AdminState> {
     return false;
   }
 
+  Future<bool> createShip(CreateShipPayload payload) async {
+    if (state.isActing) return false;
+    state = state.copyWith(isActing: true, clearActionMessage: true);
+    try {
+      await ref.read(adminRepositoryProvider).createShip(payload);
+      state = state.copyWith(
+        isActing: false,
+        actionMessage: 'Kapal berhasil ditambahkan.',
+      );
+      await load();
+      state = state.copyWith(actionMessage: 'Kapal berhasil ditambahkan.');
+      return true;
+    } on ApiException catch (error) {
+      state = state.copyWith(isActing: false, actionMessage: error.message);
+    } catch (_) {
+      state = state.copyWith(
+        isActing: false,
+        actionMessage: 'Gagal menambahkan kapal.',
+      );
+    }
+    return false;
+  }
+
   Future<void> approveSubmission(String id) async {
     if (state.isActing) return;
     state = state.copyWith(isActing: true, clearActionMessage: true);

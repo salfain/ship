@@ -129,6 +129,7 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
           userName: userName,
           state: state,
           onCreateUser: () => _showCreateUserSheet(context, state.ships),
+          onCreateShip: () => _showCreateShipSheet(context),
           onLogout: ref.read(authControllerProvider.notifier).logout,
         ),
       ],
@@ -173,6 +174,15 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _CreateUserSheet(ships: ships),
+    );
+  }
+
+  Future<void> _showCreateShipSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const _CreateShipSheet(),
     );
   }
 }
@@ -502,12 +512,14 @@ class _ProfileTab extends StatelessWidget {
     required this.userName,
     required this.state,
     required this.onCreateUser,
+    required this.onCreateShip,
     required this.onLogout,
   });
 
   final String userName;
   final AdminState state;
   final VoidCallback onCreateUser;
+  final VoidCallback onCreateShip;
   final VoidCallback onLogout;
 
   @override
@@ -555,6 +567,13 @@ class _ProfileTab extends StatelessWidget {
               ),
               const SizedBox(height: AppSizes.sm),
               AppButton(
+                label: 'Tambah Kapal',
+                icon: Icons.add_circle_outline_rounded,
+                backgroundColor: AppColors.admin,
+                onPressed: onCreateShip,
+              ),
+              const SizedBox(height: AppSizes.sm),
+              AppButton(
                 label: 'Keluar',
                 icon: Icons.logout_rounded,
                 isSecondary: true,
@@ -565,6 +584,125 @@ class _ProfileTab extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _CreateShipSheet extends ConsumerStatefulWidget {
+  const _CreateShipSheet();
+
+  @override
+  ConsumerState<_CreateShipSheet> createState() => _CreateShipSheetState();
+}
+
+class _CreateShipSheetState extends ConsumerState<_CreateShipSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _shipNumberController = TextEditingController();
+  final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _shipNumberController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(adminControllerProvider);
+    return Padding(
+      padding: EdgeInsets.only(
+        left: AppSizes.lg,
+        right: AppSizes.lg,
+        top: AppSizes.lg,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + AppSizes.lg,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Tambah Kapal',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: state.isActing
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.md),
+              AppTextField(
+                controller: _shipNumberController,
+                label: 'Nomor kapal',
+                hintText: 'Contoh: KM-004',
+                prefixIcon: Icons.confirmation_number_outlined,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  final shipNumber = value?.trim() ?? '';
+                  if (!RegExp(
+                    r'^[a-zA-Z0-9][a-zA-Z0-9 ._/-]{1,31}$',
+                  ).hasMatch(shipNumber)) {
+                    return 'Nomor kapal harus 2-32 karakter yang valid.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSizes.md),
+              AppTextField(
+                controller: _nameController,
+                label: 'Nama kapal',
+                hintText: 'Contoh: Nusantara Bahari',
+                prefixIcon: Icons.directions_boat_outlined,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
+                validator: (value) {
+                  final name = value?.trim() ?? '';
+                  if (name.length < 2 || name.length > 80) {
+                    return 'Nama kapal harus 2-80 karakter.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSizes.lg),
+              AppButton(
+                label: 'Simpan Kapal',
+                icon: Icons.save_outlined,
+                backgroundColor: AppColors.admin,
+                isLoading: state.isActing,
+                onPressed: _submit,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+
+    final success = await ref
+        .read(adminControllerProvider.notifier)
+        .createShip(
+          CreateShipPayload(
+            shipNumber: _shipNumberController.text.trim().toUpperCase(),
+            name: _nameController.text.trim(),
+          ),
+        );
+    if (mounted && success) Navigator.of(context).pop();
   }
 }
 

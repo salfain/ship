@@ -25,6 +25,14 @@ class AdminRepository {
     }
   }
 
+  Future<void> createShip(CreateShipPayload payload) async {
+    try {
+      await _dio.post<Map<String, dynamic>>('ships', data: payload.toJson());
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
   Future<List<Submission>> getSubmissions({
     String? status,
     String? shipNumber,
