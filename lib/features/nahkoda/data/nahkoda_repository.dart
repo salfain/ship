@@ -56,20 +56,20 @@ class NahkodaRepository {
         'employeeCount': '${payload.employeeCount}',
         'cargo': payload.cargo,
         'cargoAmount': payload.cargoAmount,
-        'sailingPermit': await MultipartFile.fromFile(
-          payload.sailingPermit.path,
+        'sailingPermit': MultipartFile.fromBytes(
+          await payload.sailingPermit.readAsBytes(),
           filename: payload.sailingPermit.name,
         ),
-        'callSignCertificate': await MultipartFile.fromFile(
-          payload.callSignCertificate.path,
+        'callSignCertificate': MultipartFile.fromBytes(
+          await payload.callSignCertificate.readAsBytes(),
           filename: payload.callSignCertificate.name,
         ),
-        'safetyCertificate': await MultipartFile.fromFile(
-          payload.safetyCertificate.path,
+        'safetyCertificate': MultipartFile.fromBytes(
+          await payload.safetyCertificate.readAsBytes(),
           filename: payload.safetyCertificate.name,
         ),
-        'radioStationPermit': await MultipartFile.fromFile(
-          payload.radioStationPermit.path,
+        'radioStationPermit': MultipartFile.fromBytes(
+          await payload.radioStationPermit.readAsBytes(),
           filename: payload.radioStationPermit.name,
         ),
       });
