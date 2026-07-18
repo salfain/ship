@@ -33,7 +33,7 @@ class ShipLocationPoint {
     return ShipLocationPoint(
       latitude: _toDouble(json['latitude']),
       longitude: _toDouble(json['longitude']),
-      createdAt: json['createdAt'] as String?,
+      createdAt: (json['updatedAt'] ?? json['createdAt']) as String?,
     );
   }
 }
@@ -72,6 +72,17 @@ class ShipSummary {
       latestSubmission: latestSubmission is Map<String, dynamic>
           ? Submission.fromJson(latestSubmission)
           : null,
+    );
+  }
+
+  ShipSummary copyWith({ShipLocationPoint? latestLocation}) {
+    return ShipSummary(
+      id: id,
+      shipNumber: shipNumber,
+      name: name,
+      captain: captain,
+      latestLocation: latestLocation ?? this.latestLocation,
+      latestSubmission: latestSubmission,
     );
   }
 }

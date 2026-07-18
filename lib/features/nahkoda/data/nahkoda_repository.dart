@@ -87,15 +87,20 @@ class NahkodaRepository {
     }
   }
 
-  Future<void> updateLocation({
+  Future<ShipLocationPoint> updateLocation({
     required double latitude,
     required double longitude,
   }) async {
     try {
-      await _dio.post<Map<String, dynamic>>(
+      final response = await _dio.post<Map<String, dynamic>>(
         'location/update',
         data: {'latitude': latitude, 'longitude': longitude},
       );
+      final data = response.data?['data'];
+      if (data is! Map<String, dynamic>) {
+        throw const ApiException('Data lokasi tidak valid dari server.');
+      }
+      return ShipLocationPoint.fromJson(data);
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }

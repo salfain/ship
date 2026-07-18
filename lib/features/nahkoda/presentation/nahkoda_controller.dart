@@ -177,26 +177,29 @@ class NahkodaController extends Notifier<NahkodaState> {
         return;
       }
 
-      final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) {
-        state = state.copyWith(
-          isSendingLocation: false,
-          actionMessage: 'GPS belum aktif. Aktifkan lokasi perangkat.',
-        );
-        return;
-      }
+      if (!kIsWeb) {
+        final enabled = await Geolocator.isLocationServiceEnabled();
+        if (!enabled) {
+          state = state.copyWith(
+            isSendingLocation: false,
+            actionMessage: 'GPS belum aktif. Aktifkan lokasi perangkat.',
+          );
+          return;
+        }
 
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        state = state.copyWith(
-          isSendingLocation: false,
-          actionMessage: 'Izin lokasi diperlukan untuk mengirim posisi kapal.',
-        );
-        return;
+        var permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          state = state.copyWith(
+            isSendingLocation: false,
+            actionMessage:
+                'Izin lokasi diperlukan untuk mengirim posisi kapal.',
+          );
+          return;
+        }
       }
 
       final locationSettings = kIsWeb
@@ -211,15 +214,23 @@ class NahkodaController extends Notifier<NahkodaState> {
             );
       final position = await Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
-      );
-      await ref
+      ).timeout(const Duration(seconds: 20));
+      final savedLocation = await ref
           .read(nahkodaRepositoryProvider)
           .updateLocation(
             latitude: position.latitude,
             longitude: position.longitude,
           );
+      final updatedShips = state.ships
+          .map(
+            (ship) => ship.id == state.primaryShip?.id
+                ? ship.copyWith(latestLocation: savedLocation)
+                : ship,
+          )
+          .toList();
       state = state.copyWith(
         isSendingLocation: false,
+        ships: updatedShips,
         actionMessage: 'Lokasi kapal berhasil dikirim.',
       );
       await load();
