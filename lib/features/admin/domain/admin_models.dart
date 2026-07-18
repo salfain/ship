@@ -1,5 +1,31 @@
 import '../../nahkoda/domain/nahkoda_models.dart';
 
+class CreateUserPayload {
+  const CreateUserPayload({
+    required this.name,
+    required this.username,
+    required this.password,
+    required this.role,
+    this.shipId,
+  });
+
+  final String name;
+  final String username;
+  final String password;
+  final String role;
+  final String? shipId;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'username': username,
+      'password': password,
+      'role': role,
+      if (shipId != null && shipId!.isNotEmpty) 'shipId': shipId,
+    };
+  }
+}
+
 class ShipLiveLocation {
   const ShipLiveLocation({
     required this.shipId,
