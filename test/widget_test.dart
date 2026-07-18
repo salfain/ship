@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipmonitoring/core/utils/date_formatter.dart';
 import 'package:shipmonitoring/core/utils/file_validator.dart';
+import 'package:shipmonitoring/core/utils/public_file_url.dart';
 import 'package:shipmonitoring/core/widgets/status_badge.dart';
 import 'package:shipmonitoring/features/auth/domain/user_session.dart';
 import 'package:shipmonitoring/features/dashboard/presentation/dashboard_widgets.dart';
@@ -93,5 +94,36 @@ void main() {
     final result = DateFormatter.formatDateTime('2026-07-03T09:30:00Z');
 
     expect(result, isNot('-'));
+  });
+
+  group('PublicFileUrl', () {
+    const apiBaseUrl = 'http://43.133.134.10/api/';
+
+    test('rewrites backend localhost document URL to the VPS origin', () {
+      final result = PublicFileUrl.resolve(
+        'http://localhost:3131/uploads/document.pdf',
+        apiBaseUrl: apiBaseUrl,
+      );
+
+      expect(result, 'http://43.133.134.10/uploads/document.pdf');
+    });
+
+    test('resolves a relative upload path against the VPS origin', () {
+      final result = PublicFileUrl.resolve(
+        '/uploads/document.pdf',
+        apiBaseUrl: apiBaseUrl,
+      );
+
+      expect(result, 'http://43.133.134.10/uploads/document.pdf');
+    });
+
+    test('keeps an external document URL unchanged', () {
+      final result = PublicFileUrl.resolve(
+        'https://cdn.example.test/document.pdf',
+        apiBaseUrl: apiBaseUrl,
+      );
+
+      expect(result, 'https://cdn.example.test/document.pdf');
+    });
   });
 }

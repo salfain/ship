@@ -1,5 +1,7 @@
 import 'package:file_selector/file_selector.dart';
 
+import '../../../core/utils/public_file_url.dart';
+
 class Captain {
   const Captain({required this.id, required this.name, required this.username});
 
@@ -161,10 +163,14 @@ class Submission {
       status: '${json['status'] ?? ''}',
       submittedAt: '${json['submittedAt'] ?? json['createdAt'] ?? ''}',
       reviewNote: json['reviewNote'] as String?,
-      sailingPermitUrl: json['sailingPermitUrl'] as String?,
-      callSignCertificateUrl: json['callSignCertificateUrl'] as String?,
-      safetyCertificateUrl: json['safetyCertificateUrl'] as String?,
-      radioStationPermitUrl: json['radioStationPermitUrl'] as String?,
+      sailingPermitUrl: PublicFileUrl.resolve(json['sailingPermitUrl']),
+      callSignCertificateUrl: PublicFileUrl.resolve(
+        json['callSignCertificateUrl'],
+      ),
+      safetyCertificateUrl: PublicFileUrl.resolve(json['safetyCertificateUrl']),
+      radioStationPermitUrl: PublicFileUrl.resolve(
+        json['radioStationPermitUrl'],
+      ),
       reviewedAt: json['reviewedAt'] as String?,
     );
   }
