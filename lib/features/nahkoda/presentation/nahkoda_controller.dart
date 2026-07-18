@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -165,6 +168,15 @@ class NahkodaController extends Notifier<NahkodaState> {
     state = state.copyWith(isSendingLocation: true, clearActionMessage: true);
 
     try {
+      if (!_isLocationOriginAllowed()) {
+        state = state.copyWith(
+          isSendingLocation: false,
+          actionMessage:
+              'Lokasi Chrome hanya tersedia melalui HTTPS atau localhost.',
+        );
+        return;
+      }
+
       final enabled = await Geolocator.isLocationServiceEnabled();
       if (!enabled) {
         state = state.copyWith(
@@ -187,10 +199,18 @@ class NahkodaController extends Notifier<NahkodaState> {
         return;
       }
 
+      final locationSettings = kIsWeb
+          ? WebSettings(
+              accuracy: LocationAccuracy.high,
+              maximumAge: Duration(minutes: 5),
+              timeLimit: Duration(seconds: 20),
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 20),
+            );
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: locationSettings,
       );
       await ref
           .read(nahkodaRepositoryProvider)
@@ -203,6 +223,29 @@ class NahkodaController extends Notifier<NahkodaState> {
         actionMessage: 'Lokasi kapal berhasil dikirim.',
       );
       await load();
+    } on TimeoutException {
+      state = state.copyWith(
+        isSendingLocation: false,
+        actionMessage:
+            'Lokasi tidak ditemukan dalam 20 detik. Pastikan izin lokasi Chrome dan lokasi perangkat aktif.',
+      );
+    } on PermissionDeniedException {
+      state = state.copyWith(
+        isSendingLocation: false,
+        actionMessage:
+            'Izin lokasi Chrome ditolak. Izinkan Location pada pengaturan situs.',
+      );
+    } on LocationServiceDisabledException {
+      state = state.copyWith(
+        isSendingLocation: false,
+        actionMessage: 'Layanan lokasi perangkat belum aktif.',
+      );
+    } on UnsupportedError {
+      state = state.copyWith(
+        isSendingLocation: false,
+        actionMessage:
+            'Browser atau alamat Web ini tidak mendukung pengambilan lokasi.',
+      );
     } on ApiException catch (error) {
       state = state.copyWith(
         isSendingLocation: false,
@@ -218,5 +261,14 @@ class NahkodaController extends Notifier<NahkodaState> {
 
   void clearMessage() {
     state = state.copyWith(clearActionMessage: true);
+  }
+
+  bool _isLocationOriginAllowed() {
+    if (!kIsWeb) return true;
+    final origin = Uri.base;
+    return origin.scheme == 'https' ||
+        origin.host == 'localhost' ||
+        origin.host == '127.0.0.1' ||
+        origin.host == '::1';
   }
 }

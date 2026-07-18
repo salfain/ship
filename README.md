@@ -23,6 +23,7 @@ Migrasi awal aplikasi Ship Monitoring dari Android Kotlin/Jetpack Compose ke Flu
 - Pemilihan file disiapkan memakai `file_selector`; `file_picker` tidak dipakai karena gagal build pada kombinasi Flutter 3.44.4 dan Android Gradle Plugin terbaru di mesin ini.
 - Base URL default mengikuti repo acuan: `https://ship-monitoring-be.vercel.app/api`. Backend lokal baru tersedia di folder `backend/`; ganti `API_BASE_URL` di `.env` bila ingin memakai backend lokal/VPS sendiri.
 - Kirim lokasi Nakhoda memakai `geolocator`; uji final perlu device fisik dengan izin lokasi aktif.
+- Pada Flutter Web, kirim lokasi hanya tersedia melalui HTTPS atau `localhost`; izin Location pada Chrome dan layanan lokasi sistem harus aktif.
 - Peta marker kapal memakai `google_maps_flutter`; saat `GOOGLE_MAPS_API_KEY` kosong, aplikasi menampilkan preview peta agar layar tetap aman dibuka. API key asli harus dibuat dari akun Google Cloud milik project.
 - Cek kedatangan Admin sudah menyimpan item checklist dan catatan; upload dokumen inspeksi dapat ditambahkan setelah kebutuhan file backend final.
 - Keputusan Manager memakai endpoint baru `PUT /api/submissions/{id}/manager-validation`.
